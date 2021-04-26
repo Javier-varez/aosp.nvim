@@ -1,54 +1,51 @@
 
 local vim = vim
+local environment_table = {
+    product = 'TARGET_PRODUCT',
+    build_variant = 'TARGET_BUILD_VARIANT',
+    tree_top = 'ANDROID_BUILD_TOP',
+    tree_out = 'ANDROID_PRODUCT_OUT',
+}
 
-local get_aosp_out_dir = function()
-    local dir = vim.env['ANDROID_PRODUCT_OUT']
-    if dir == nil then
-        print('Please source the aosp build/envsetup.sh and select a target with lunch first')
+local M = {
+    -- module variables
+    __environment = nil,
+    __module_info = nil
+}
+
+M._validate_environment = function()
+    for k, _ in pairs(environment_table) do
+        if M.environment()[k] == nil then
+            return false
+        end
     end
-    return dir
+    return true
 end
 
-local to_buffer = function(data)
-    local buffer = vim.api.nvim_create_buf(false, true)
+M._module_info = function()
+    if M.__module_info == nil then
+        local context_manager = require'plenary.context_manager'
+        local with = context_manager.with
+        local open = context_manager.open
 
-    local lines = {}
-    for s in vim.inspect(data):gmatch("[^\r\n]+") do
-        table.insert(lines, s)
+        local out_dir = M.environment().tree_out
+        local module_info_dict = with(open(out_dir..'/module-info.json'), function(reader)
+            local data = reader:read("*all")
+            return vim.fn.json_decode(data)
+        end)
+
+        local module_info = {}
+        for k, v in pairs(module_info_dict) do
+            v.module_name = k
+            table.insert(module_info, v)
+        end
+        M.__module_info = module_info
     end
 
-    vim.api.nvim_buf_set_lines(buffer, 0, -1, true, lines)
-    vim.cmd('vnew')
-    local current_window = vim.api.nvim_get_current_win()
-    vim.api.nvim_win_set_buf(current_window, buffer)
+    return M.__module_info
 end
 
-local find_module_info = function()
-    local context_manager = require'plenary.context_manager'
-    local with = context_manager.with
-    local open = context_manager.open
-
-    local out_dir = get_aosp_out_dir()
-    if out_dir == nil then
-        return
-    end
-
-    print('Loading module info')
-    local module_info_dict = with(open(out_dir..'/module-info.json'), function(reader)
-        local data = reader:read("*all")
-        return vim.fn.json_decode(data)
-    end)
-
-    local module_info = {}
-    for k, v in pairs(module_info_dict) do
-        v.module_name = k
-        table.insert(module_info, v)
-    end
-
-    return module_info
-end
-
-local find_module_and_do = function(database, module_action)
+M._find_module_and_do = function(module_action)
     local Picker = require('telescope.pickers')
     local finders = require('telescope.finders')
     local sorters = require('telescope.sorters')
@@ -56,7 +53,7 @@ local find_module_and_do = function(database, module_action)
     Picker.new(nil, {
         prompt_title = 'AOSP Module',
         finder = finders.new_table {
-            results = database,
+            results = M._module_info(),
             entry_maker = function(entry)
                 return {
                     value = entry,
@@ -70,7 +67,7 @@ local find_module_and_do = function(database, module_action)
             action_set.select:replace(function(prompt_buffer)
                 local actions = require'telescope.actions'
                 local action_state = require'telescope.actions.state'
-                module_action(action_state.get_selected_entry())
+                module_action(action_state.get_selected_entry().value)
                 actions.close(prompt_buffer)
             end)
             return true
@@ -78,38 +75,49 @@ local find_module_and_do = function(database, module_action)
      }):find()
 end
 
-local module_info = nil
+M._current_lunch_target = function()
+    return M.environment().product..'-'..M.environment().build_variant
+end
 
-local M = {}
+M.environment = function()
+    if M.__environment == nil then
+        M.__environment = {}
+        for k, v in pairs(environment_table) do
+            M.__environment[k] = vim.env[v]
+        end
+    end
+    return M.__environment
+end
 
 M.reload_module_info = function()
-    module_info = find_module_info()
+    M.__module_info = nil
+    M._module_info()
 end
 
 M.build_target = function()
-    if module_info == nil then
-        module_info = find_module_info()
-    end
-
-    find_module_and_do(module_info, function(module)
-        print('The choice is: '..vim.inspect(module))
+    M._find_module_and_do(function(module)
+        local job = require('plenary.job')
+        local build_job = job:new({
+            command = 'bash',
+            args = {
+                '-c',
+                '. build/envsetup.sh && '..
+                'lunch '..M._current_lunch_target()..' && '..
+                'm -j '..module.module_name
+            },
+            cwd = M.environment().tree_top,
+            on_stdout = vim.schedule_wrap(function(_, data)
+                print(data)
+            end),
+            on_stderr = vim.schedule_wrap(function(_, data)
+                print(data)
+            end),
+            on_exit = vim.schedule_wrap(function(_, return_val)
+                print(return_val)
+            end),
+        })
+        build_job:start()
     end)
-    --to_buffer(module_info)
-    --local job = require('plenary.job')
-    --local buffer = vim.api.nvim_create_buf(true, false)
-
-    --job:new({
-    --    command = 'make',
-    --    on_stdout = vim.schedule_wrap(function(_, data)
-    --        vim.api.nvim_buf_set_lines(buffer, -1, -1, true, { data })
-    --    end),
-    --    on_stderr = vim.schedule_wrap(function(_, data)
-    --        vim.api.nvim_buf_set_lines(buffer, -1, -1, true, { data })
-    --    end),
-    --    on_exit = vim.schedule_wrap(function(j, return_val)
-    --        print(return_val)
-    --    end),
-    --}):start()
 end
 
 M.reload = function()
@@ -118,7 +126,14 @@ end
 
 return setmetatable({}, {
     __index = function(_, k)
-        --require'plenary.reload'.reload_module('aosp_nvim')
+        -- You can uncomment the following line in order to enable reloading
+        -- of the module every time a function is called.
+        --M.reload()
+        if not M._validate_environment() then
+            return function()
+                print("Please, run 'source build/envsetup.sh' and 'lunch' first.")
+            end
+        end
         return M[k]
     end
 })
