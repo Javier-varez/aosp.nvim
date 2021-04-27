@@ -4,7 +4,7 @@ let s:save_cpo = &cpo " save user coptions
 set cpo&vim " reset them to defaults
 
 " command to run our plugin
-command! Aosp lua require'aosp_nvim'.do_something()
+command! Aosp lua require'aosp_nvim'.build_target()
 
 let &cpo = s:save_cpo " and restore after
 unlet s:save_cpo
