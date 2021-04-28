@@ -30,4 +30,9 @@ M.get = function()
     return M.__environment
 end
 
+M.lunch_target = function()
+    local environment = require'aosp_nvim.environment'.get()
+    return environment.product..'-'..environment.build_variant
+end
+
 return M
