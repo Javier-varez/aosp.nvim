@@ -45,6 +45,15 @@ M.build_target = function()
     end)
 end
 
+M.build_and_push = function()
+    M._find_module_and_do(function(module)
+        local build_job = require'aosp_nvim.build'.build(module.module_name)
+        local push_job = require'aosp_nvim.build'.push(module)
+        build_job:and_then_on_success(push_job)
+        build_job:start()
+    end)
+end
+
 M.reload = function()
     require'plenary.reload'.reload_module('aosp_nvim')
 end

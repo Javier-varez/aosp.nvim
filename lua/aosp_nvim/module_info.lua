@@ -47,12 +47,11 @@ M.get = function()
 end
 
 M.rebuild = function()
-    local environment = require'aosp_nvim.environment'.get()
+    local out_dir = require'aosp_nvim.environment'.relative_out()
     local build = require'aosp_nvim.build'.build
     local Path = require'plenary.path'
-    local module_info = Path:new(environment.tree_out..'/module-info.json')
 
-    local build_job = build(module_info:make_relative(environment.tree_top))
+    local build_job = build(out_dir..'/module-info.json')
     build_job:sync()
 end
 

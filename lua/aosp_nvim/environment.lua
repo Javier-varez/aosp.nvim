@@ -31,8 +31,13 @@ M.get = function()
 end
 
 M.lunch_target = function()
-    local environment = require'aosp_nvim.environment'.get()
-    return environment.product..'-'..environment.build_variant
+    return M.get().product..'-'..M.get().build_variant
+end
+
+M.relative_out = function()
+    local Path = require'plenary.path'
+    local module_info = Path:new(M.get().tree_out)
+    return module_info:make_relative(M.get().tree_top)
 end
 
 return M
