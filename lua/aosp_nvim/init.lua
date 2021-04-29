@@ -33,6 +33,7 @@ M._find_module_and_do = function(module_action)
                 local actions = require'telescope.actions'
                 local action_state = require'telescope.actions.state'
                 actions.close(prompt_buffer)
+                M.__display:clear()
                 M.__display:show()
                 module_action(action_state.get_selected_entry().value)
             end)
