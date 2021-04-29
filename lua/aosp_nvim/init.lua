@@ -1,7 +1,9 @@
 
 local vim = vim
 
-local M = {}
+local M = {
+    __display = require'aosp_nvim.display':new()
+}
 
 M._find_module_and_do = function(module_action)
     local Picker = require('telescope.pickers')
@@ -30,12 +32,21 @@ M._find_module_and_do = function(module_action)
             action_set.select:replace(function(prompt_buffer)
                 local actions = require'telescope.actions'
                 local action_state = require'telescope.actions.state'
-                module_action(action_state.get_selected_entry().value)
                 actions.close(prompt_buffer)
+                M.__display:show()
+                module_action(action_state.get_selected_entry().value)
             end)
             return true
         end
      }):find()
+end
+
+M._append_text_to_display = vim.schedule_wrap(function(data)
+    M.__display:append(tostring(data))
+end)
+
+M.toggle_display = function()
+    M.__display:toggle()
 end
 
 M.build_target = function()
