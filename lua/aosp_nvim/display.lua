@@ -1,7 +1,9 @@
 
 local vim = vim
 
-local Display = { }
+local Display = {
+    __buffer_configured = false
+}
 
 function Display:new()
     local object = {}
@@ -24,6 +26,11 @@ function Display:show()
     vim.cmd('belowright '..tostring(new_window_size)..'new')
     self.__split = vim.api.nvim_get_current_win()
     vim.api.nvim_win_set_buf(self.__split, self.__buffer)
+    if self.__buffer_configured ~= true then
+        -- The first time we show the buffer we try to enable showing ansi escape sequences
+        vim.cmd('AnsiEsc')
+        self.__buffer_configured = true
+    end
 end
 
 function Display:append(text)
