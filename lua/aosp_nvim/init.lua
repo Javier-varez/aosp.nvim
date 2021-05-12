@@ -10,15 +10,24 @@ M._find_module_and_do = function(module_action)
     local finders = require('telescope.finders')
     local sorters = require('telescope.sorters')
     local action_set = require('telescope.actions.set')
-    local module_info = require('aosp_nvim.module_info').get()
-    if module_info == nil then
-        return
+    local module_info = require('aosp_nvim.module_info')
+    if not module_info.exists() then
+        local rebuild = vim.fn.input('Module info not found, rebuild? [Y/n]: ')
+        if rebuild == 'y' or rebuild == 'Y' or rebuild == '' then
+            local build_job = module_info.rebuild()
+            M.__display:clear()
+            M.__display:show()
+            build_job:start()
+            return
+        else
+            return
+        end
     end
 
     Picker.new(nil, {
         prompt_title = 'AOSP Module',
         finder = finders.new_table {
-            results = module_info,
+            results = module_info.get(),
             entry_maker = function(entry)
                 return {
                     value = entry,

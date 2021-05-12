@@ -22,12 +22,7 @@ M.get = function()
         local out_dir = environment.tree_out
 
         if not M.exists() then
-            local rebuild = vim.fn.input('Module info not found, rebuild? [Y/n]: ')
-            if rebuild == 'y' or rebuild == 'Y' or rebuild == '' then
-                M.rebuild()
-            else
-                return
-            end
+            return
         end
 
         M.__module_info = with(open(out_dir..'/module-info.json'), function(reader)
@@ -49,10 +44,9 @@ end
 M.rebuild = function()
     local out_dir = require'aosp_nvim.environment'.relative_out()
     local build = require'aosp_nvim.build'.build
-    local Path = require'plenary.path'
 
     local build_job = build(out_dir..'/module-info.json')
-    build_job:sync()
+    return build_job
 end
 
 M.reload = function()
