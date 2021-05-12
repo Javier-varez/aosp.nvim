@@ -10,6 +10,7 @@ function Display:new()
     self.__index = self
     object.__buffer = vim.api.nvim_create_buf(false, true)
     vim.api.nvim_buf_set_option(object.__buffer, 'modifiable', false)
+    vim.api.nvim_buf_set_option(object.__buffer, 'filetype', 'terminal')
     vim.api.nvim_buf_set_name(object.__buffer, 'AOSP Console')
     return setmetatable(object, self)
 end
@@ -25,22 +26,19 @@ function Display:show()
 
     vim.cmd('belowright '..tostring(new_window_size)..'new')
     self.__split = vim.api.nvim_get_current_win()
+    vim.api.nvim_win_set_option(self.__split, 'concealcursor', 'nc')
+    vim.api.nvim_win_set_option(self.__split, 'conceallevel', 2)
     vim.api.nvim_win_set_buf(self.__split, self.__buffer)
-    if self.__buffer_configured ~= true then
-        -- The first time we show the buffer we try to enable showing ansi escape sequences
-        vim.cmd('AnsiEsc')
-        self.__buffer_configured = true
-    end
 end
 
 function Display:append(text)
     vim.api.nvim_buf_set_option(self.__buffer, 'modifiable', true)
     vim.api.nvim_buf_set_lines(self.__buffer, -1, -1, false, { text })
+    vim.api.nvim_buf_set_option(self.__buffer, 'modifiable', false)
     if self.__split ~= nil then
         local length = vim.api.nvim_buf_line_count(self.__buffer)
         vim.api.nvim_win_set_cursor(self.__split, { length, 0 })
     end
-    vim.api.nvim_buf_set_option(self.__buffer, 'modifiable', false)
 end
 
 function Display:toggle()
