@@ -22,7 +22,7 @@ Using [packer](https://github.com/wbthomason/packer.nvim):
 use 'nvim-lua/popup.nvim'
 use 'nvim-lua/plenary.nvim'
 use 'nvim-telescope/telescope.nvim'
-Plug 'norcalli/nvim-terminal.lua'
+use 'norcalli/nvim-terminal.lua'
 use 'javier-varez/aosp.nvim'
 ```
 
