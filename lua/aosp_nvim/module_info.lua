@@ -30,8 +30,7 @@ M.get = function()
             local module_info_dict = vim.fn.json_decode(data)
 
             local module_info = {}
-            for k, v in pairs(module_info_dict) do
-                v.module_name = k
+            for _, v in pairs(module_info_dict) do
                 table.insert(module_info, v)
             end
             return module_info
