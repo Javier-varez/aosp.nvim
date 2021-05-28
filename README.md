@@ -80,3 +80,12 @@ This will show a picker with the available subtrees. More subtrees can be define
     }
 ]
 ```
+
+To generate the compilation database and symlink it to the top directory you can add the following mapping:
+
+```
+vim.api.nvim_set_keymap('n', '<leader>ac', '<Cmd>lua require("aosp_nvim").compdb()<CR>', {
+    noremap = true,
+    silent=true
+})
+```
