@@ -75,6 +75,13 @@ M.build_and_push = function()
     end)
 end
 
+M.compdb = function()
+    local compdb_job = require'aosp_nvim.build'.compdb()
+    M.__display:clear()
+    M.__display:show()
+    compdb_job:start()
+end
+
 M.reload = function()
     require'plenary.reload'.reload_module('aosp_nvim')
 end
