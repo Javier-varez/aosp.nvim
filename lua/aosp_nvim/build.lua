@@ -111,7 +111,7 @@ M.compdb = function()
             '-c',
             '. build/envsetup.sh && '..
             'lunch '..environment.lunch_target()..' && '..
-            'make nothing'
+            'make nothing -j'
         },
         env = env,
     })
