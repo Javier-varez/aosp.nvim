@@ -89,3 +89,12 @@ vim.api.nvim_set_keymap('n', '<leader>ac', '<Cmd>lua require("aosp_nvim").compdb
     silent=true
 })
 ```
+
+Rebuild the module info with:
+
+```lua
+vim.api.nvim_set_keymap('n', '<leader>ar', '<Cmd>lua require("aosp_nvim").rebuild_module_info()<CR>', {
+    noremap = true,
+    silent=true
+})
+```

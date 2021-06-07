@@ -58,7 +58,7 @@ M.schedule_job = function(opts)
     })
 end
 
-M.build = function(module_name)
+M.build = function(module_name, on_exit)
     local environment = require'aosp_nvim.environment'
     return M.schedule_job({
         command = 'bash',
@@ -67,7 +67,8 @@ M.build = function(module_name)
             '. build/envsetup.sh && '..
             'lunch '..environment.lunch_target()..' && '..
             'm -j '..module_name
-        }
+        },
+        on_exit = on_exit
     })
 end
 

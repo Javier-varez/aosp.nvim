@@ -59,6 +59,14 @@ M.toggle_display = function()
     M.__display:toggle()
 end
 
+M.rebuild_module_info = function()
+    local module_info = require('aosp_nvim.module_info')
+    local build_job = module_info.rebuild()
+    M.__display:clear()
+    M.__display:show()
+    build_job:start()
+end
+
 M.build_target = function()
     M._find_module_and_do(function(module)
         local build_job = require'aosp_nvim.build'.build(module.module_name)

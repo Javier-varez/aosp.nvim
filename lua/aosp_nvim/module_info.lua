@@ -44,7 +44,10 @@ M.rebuild = function()
     local out_dir = require'aosp_nvim.environment'.relative_out()
     local build = require'aosp_nvim.build'.build
 
-    local build_job = build(out_dir..'/module-info.json')
+    local build_job = build(out_dir..'/module-info.json', function()
+        -- Now reload module info
+        M.reload()
+    end)
     return build_job
 end
 
