@@ -3,6 +3,27 @@ local M = {
     __module_info = nil
 }
 
+-- This is a class that represents an AOSP module and provides utility methods
+AospModule = {}
+
+AospModule.is_native_test = function(module)
+    for _, v in ipairs(module.class) do
+        if v == 'NATIVE_TESTS' then
+            return true
+        end
+    end
+    return false
+end
+
+AospModule.is_host_module = function(module)
+    for _, installed_path in ipairs(module.installed) do
+        if installed_path:find('/host/') then
+            return true
+        end
+    end
+    return false
+end
+
 M.exists = function()
     local environment = require'aosp_nvim.environment'.get()
     local module_info = io.open(environment.tree_out.."/module-info.json", "r")
@@ -31,6 +52,7 @@ M.get = function()
 
             local module_info = {}
             for _, v in pairs(module_info_dict) do
+                setmetatable(v, {__index = AospModule})
                 table.insert(module_info, v)
             end
             return module_info

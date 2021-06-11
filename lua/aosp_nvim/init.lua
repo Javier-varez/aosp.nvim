@@ -5,7 +5,35 @@ local M = {
     __display = require'aosp_nvim.display':new()
 }
 
-M._find_module_and_do = function(module_action)
+local parse_options = function(opts)
+    local module_info = require('aosp_nvim.module_info')
+    local fulfills_requirements = function(module, opts)
+        if opts then
+            if opts.native_tests then
+                if not module:is_native_test() then
+                    return false
+                end
+            end
+
+            if opts.host_module then
+                if not module:is_host_module () then
+                    return false
+                end
+            end
+        end
+        return true
+    end
+
+    local out = {}
+    for _, module in ipairs(module_info.get()) do
+        if fulfills_requirements(module, opts) then
+            table.insert(out, module)
+        end
+    end
+    return out
+end
+
+M._find_module_and_do = function(module_action, opts)
     local Picker = require('telescope.pickers')
     local finders = require('telescope.finders')
     local sorters = require('telescope.sorters')
@@ -27,7 +55,7 @@ M._find_module_and_do = function(module_action)
     Picker.new(nil, {
         prompt_title = 'AOSP Module',
         finder = finders.new_table {
-            results = module_info.get(),
+            results = parse_options(opts),
             entry_maker = function(entry)
                 return {
                     value = entry,
@@ -67,20 +95,20 @@ M.rebuild_module_info = function()
     build_job:start()
 end
 
-M.build_target = function()
+M.build_target = function(opts)
     M._find_module_and_do(function(module)
         local build_job = require'aosp_nvim.build'.build(module.module_name)
         build_job:start()
-    end)
+    end, opts)
 end
 
-M.build_and_push = function()
+M.build_and_push = function(opts)
     M._find_module_and_do(function(module)
         local build_job = require'aosp_nvim.build'.build(module.module_name)
         local push_job = require'aosp_nvim.build'.push(module)
         build_job:and_then_on_success(push_job)
         build_job:start()
-    end)
+    end, opts)
 end
 
 M.compdb = function()
