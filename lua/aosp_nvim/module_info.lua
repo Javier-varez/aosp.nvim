@@ -24,6 +24,15 @@ AospModule.is_host_module = function(module)
     return false
 end
 
+AospModule.is_fake = function(module)
+    for _, v in ipairs(module.class) do
+        if v == 'FAKE' then
+            return true
+        end
+    end
+    return false
+end
+
 M.exists = function()
     local environment = require'aosp_nvim.environment'.get()
     local module_info = io.open(environment.tree_out.."/module-info.json", "r")

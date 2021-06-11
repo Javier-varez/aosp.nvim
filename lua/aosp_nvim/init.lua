@@ -5,20 +5,34 @@ local M = {
     __display = require'aosp_nvim.display':new()
 }
 
+local default_options = {
+    native_tests = false,
+    host_module = false,
+    include_fakes = false,
+}
+
 local parse_options = function(opts)
     local module_info = require('aosp_nvim.module_info')
     local fulfills_requirements = function(module, opts)
-        if opts then
-            if opts.native_tests then
-                if not module:is_native_test() then
-                    return false
-                end
-            end
+        if opts == nil then
+            opts = default_options
+        end
 
-            if opts.host_module then
-                if not module:is_host_module () then
-                    return false
-                end
+        if opts.native_tests then
+            if not module:is_native_test() then
+                return false
+            end
+        end
+
+        if opts.host_module then
+            if not module:is_host_module () then
+                return false
+            end
+        end
+
+        if not opts.include_fakes then
+            if module:is_fake () then
+                return false
             end
         end
         return true
