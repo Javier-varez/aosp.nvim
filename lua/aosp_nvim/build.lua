@@ -100,6 +100,29 @@ M.push = function(module)
     return adb_root
 end
 
+M.atest = function(module_name, opts)
+    if opts == nil then
+        opts = {}
+    end
+
+    atest_args = ''
+    if opts.host_module then
+        atest_args = atest_args..'--host '
+    end
+
+    local environment = require'aosp_nvim.environment'
+    return M.schedule_job({
+        command = 'bash',
+        args = {
+            '-c',
+            '. build/envsetup.sh && '..
+            'lunch '..environment.lunch_target()..' && '..
+            'atest '..atest_args..module_name
+        },
+        on_exit = opts.on_exit
+    })
+end
+
 M.compdb = function()
     local environment = require'aosp_nvim.environment'
     local env = vim.fn.environ()

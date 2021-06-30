@@ -125,6 +125,18 @@ M.build_and_push = function(opts)
     end, opts)
 end
 
+M.run_test = function(opts)
+    if opts == nil then
+        opts = {}
+    end
+    opts.native_tests = true
+
+    M._find_module_and_do(function(module)
+        local atest_job = require'aosp_nvim.build'.atest(module.module_name, opts)
+        atest_job:start()
+    end, opts)
+end
+
 M.compdb = function()
     local compdb_job = require'aosp_nvim.build'.compdb()
     M.__display:clear()
